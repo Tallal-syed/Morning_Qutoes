@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Good Morning Talal</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            background: #0a0a1a;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 30px 20px;
+        }
+        .card {
+            background: #1a1a2e;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 15px auto;
+            max-width: 400px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #00d4ff;
+            margin-bottom: 5px;
+        }
+        .label {
+            color: #888;
+            font-size: 13px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        .value {
+            font-size: 20px;
+            font-weight: bold;
+        }
+        .quote {
+            font-style: italic;
+            font-size: 16px;
+            line-height: 1.6;
+            color: #ccc;
+        }
+        .author {
+            color: #00d4ff;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        .weather-icon {
+            font-size: 48px;
+            margin: 10px 0;
+        }
+        .divider {
+            border: 1px solid #333;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="title">Good Morning, Talal! 👋</div>
+        <div id="datetime" style="color:#888; margin-top:8px;"></div>
+    </div>
+
+    <div class="card">
+        <div class="label">🌤 Weather in Houston</div>
+        <div class="weather-icon" id="weather-icon">⏳</div>
+        <div class="value" id="temp">Loading...</div>
+        <div style="color:#888; font-size:14px;" id="feels">--</div>
+        <hr class="divider">
+        <div style="font-size:14px;" id="condition">--</div>
+        <div style="font-size:14px; color:#888;" id="humidity">--</div>
+    </div>
+
+    <div class="card">
+        <div class="label">💬 Quote of the Morning</div>
+        <div class="quote" id="quote">Loading...</div>
+        <div class="author" id="author"></div>
+    </div>
+
+<script>
+    // DATE AND TIME
+    function updateTime() {
+        var now = new Date();
+        var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+        var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+        var day = days[now.getDay()];
+        var month = months[now.getMonth()];
+        var date = now.getDate();
+        var year = now.getFullYear();
+        var hours = now.getHours();
+        var mins = now.getMinutes();
+        var ampm = hours >= 12 ? "PM" : "AM";
+        hours = hours % 12;
+        if (hours == 0) hours = 12;
+        if (mins < 10) mins = "0" + mins;
+        document.getElementById("datetime").innerHTML = day + ", " + month + " " + date + " " + year + " &nbsp;|&nbsp; " + hours + ":" + mins + " " + ampm;
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
+
+    // WEATHER - free API no key needed
+    fetch("https://wttr.in/Houston?format=j1")
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            var condition = data.current_condition[0];
+            var temp = condition.temp_F;
+            var feels = condition.FeelsLikeF;
+            var desc = condition.weatherDesc[0].value;
+            var humidity = condition.humidity;
+            var code = parseInt(condition.weatherCode);
+
+            var icon = "🌤";
+            if (code == 113) icon = "☀️";
+            else if (code == 116) icon = "⛅";
+            else if (code == 119 || code == 122) icon = "☁️";
+            else if (code >= 293 && code <= 321) icon = "🌧️";
+            else if (code >= 200 && code <= 232) icon = "⛈️";
+            else if (code >= 338 && code <= 395) icon = "❄️";
+
+            document.getElementById("weather-icon").innerHTML = icon;
+            document.getElementById("temp").innerHTML = temp + "°F";
+            document.getElementById("feels").innerHTML = "Feels like " + feels + "°F";
+            document.getElementById("condition").innerHTML = desc;
+            document.getElementById("humidity").innerHTML = "Humidity: " + humidity + "%";
+        });
+
+    // QUOTE - free API no key needed
+    fetch("https://zenquotes.io/api/random")
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            document.getElementById("quote").innerHTML = data[0].q;
+            document.getElementById("author").innerHTML = "— " + data[0].a;
+        });
+</script>
+
+</body>
+</html>
