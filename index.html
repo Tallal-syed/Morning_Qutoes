@@ -10,6 +10,7 @@
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 30px 20px;
+            margin: 0;
         }
         .card {
             background: #1a1a2e;
@@ -99,38 +100,55 @@
     updateTime();
     setInterval(updateTime, 1000);
 
-    // WEATHER - free API no key needed
-    fetch("https://wttr.in/Houston?format=j1")
+    // WEATHER - using Open-Meteo (100% free, no key, no CORS issues)
+    // First get coordinates for Houston then fetch weather
+    fetch("https://geocoding-api.open-meteo.com/v1/search?name=Houston&count=1&country=US")
+        .then(function(res) { return res.json(); })
+        .then(function(geoData) {
+            var lat = geoData.results[0].latitude;
+            var lon = geoData.results[0].longitude;
+            var weatherUrl = "https://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon + "&current=temperature_2m,apparent_temperature,relative_humidity_2m,weathercode&temperature_unit=fahrenheit&wind_speed_unit=mph";
+            return fetch(weatherUrl);
+        })
         .then(function(res) { return res.json(); })
         .then(function(data) {
-            var condition = data.current_condition[0];
-            var temp = condition.temp_F;
-            var feels = condition.FeelsLikeF;
-            var desc = condition.weatherDesc[0].value;
-            var humidity = condition.humidity;
-            var code = parseInt(condition.weatherCode);
+            var current = data.current;
+            var temp = Math.round(current.temperature_2m);
+            var feels = Math.round(current.apparent_temperature);
+            var humidity = current.relative_humidity_2m;
+            var code = current.weathercode;
 
             var icon = "🌤";
-            if (code == 113) icon = "☀️";
-            else if (code == 116) icon = "⛅";
-            else if (code == 119 || code == 122) icon = "☁️";
-            else if (code >= 293 && code <= 321) icon = "🌧️";
-            else if (code >= 200 && code <= 232) icon = "⛈️";
-            else if (code >= 338 && code <= 395) icon = "❄️";
+            var desc = "Clear";
+            if (code == 0) { icon = "☀️"; desc = "Clear Sky"; }
+            else if (code <= 2) { icon = "⛅"; desc = "Partly Cloudy"; }
+            else if (code == 3) { icon = "☁️"; desc = "Overcast"; }
+            else if (code <= 57) { icon = "🌫️"; desc = "Foggy"; }
+            else if (code <= 67) { icon = "🌧️"; desc = "Rainy"; }
+            else if (code <= 77) { icon = "❄️"; desc = "Snowy"; }
+            else if (code <= 82) { icon = "🌧️"; desc = "Rain Showers"; }
+            else if (code <= 99) { icon = "⛈️"; desc = "Thunderstorm"; }
 
             document.getElementById("weather-icon").innerHTML = icon;
             document.getElementById("temp").innerHTML = temp + "°F";
             document.getElementById("feels").innerHTML = "Feels like " + feels + "°F";
             document.getElementById("condition").innerHTML = desc;
             document.getElementById("humidity").innerHTML = "Humidity: " + humidity + "%";
+        })
+        .catch(function() {
+            document.getElementById("temp").innerHTML = "Weather unavailable";
         });
 
-    // QUOTE - free API no key needed
-    fetch("https://zenquotes.io/api/random")
+    // QUOTE - using quotable.io (supports CORS)
+    fetch("https://api.quotable.io/random")
         .then(function(res) { return res.json(); })
         .then(function(data) {
-            document.getElementById("quote").innerHTML = data[0].q;
-            document.getElementById("author").innerHTML = "— " + data[0].a;
+            document.getElementById("quote").innerHTML = data.content;
+            document.getElementById("author").innerHTML = "— " + data.author;
+        })
+        .catch(function() {
+            document.getElementById("quote").innerHTML = "Every day is a new opportunity.";
+            document.getElementById("author").innerHTML = "— Unknown";
         });
 </script>
 
